@@ -9,10 +9,19 @@ module.exports = function(){
     console.log('this is the middleware');
 }
 
-function callCOA () {
-	axios.get('https://data.austintexas.gov/resource/asyh-u6ja.json')
+function writeUpdate (cData) {
+	fs.writeFile('json/data.json', JSON.stringify(cData), 'utf-8', function(err) {
+		if (err) throw err
+		console.log('JSON Sent!');
+	});
+}
+
+function callCOA (cData) {
+	axios.get('https://data.austintexas.gov/resource/asyh-u6ja.json?$limit=5')
 	.then(function (response) {
-		console.log(response);
+		console.log(response.data);
+		cData.pacspending = response.data;
+		writeUpdate(cData);
 	})
 	.catch(function (error) {
 		console.log(error);
@@ -24,11 +33,13 @@ function updateCheck () {
         if (err) throw err
         var cData = JSON.parse(data)
         lastUpdate = cData.lastUpdated
-        console.log(lastUpdate, 'last update')
         if ((Date.now() - lastUpdate) > 1000) {
-            console.log('booooooo')
+			cData.lastUpdated = [];
+			cData.pacspending = [];
+			cData.lastUpdated.push(Date.now());
+			callCOA(cData);
         }
-    })
+	});
 };
 
 function checkForJSON() {
