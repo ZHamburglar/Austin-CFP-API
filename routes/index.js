@@ -1,8 +1,10 @@
-const axios = require('axios');
 const fs = require('fs');
 var path = require('path');
 var express = require('express');
 var router = express.Router();
+
+var pacData = require('../middleware/pacData');
+
 
 router.get('/', function(req, res, next) {
 	// axios.get('https://data.austintexas.gov/resource/asyh-u6ja.json')
@@ -12,10 +14,9 @@ router.get('/', function(req, res, next) {
 	// .catch(function (error) {
 	// 	console.log(error);
 	// });
-	checkForJSON();
+	pacData();
 	fs.readFile('./json/data.json', 'utf-8', function(err, data) {
 		if (err) throw err
-		var pacData = JSON.parse(data);
 		sendJSON(res);
 	})
 
