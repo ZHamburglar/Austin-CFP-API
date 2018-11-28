@@ -8,9 +8,12 @@ const existsSync = util.promisify(fs.existsSync);
 const readFile = util.promisify(fs.readFile);
 const writeFile = util.promisify(fs.writeFile);
 
+const jsonPath = 'json/data.json'
+
 module.exports = function(){
-    checkForJSON();
-    // updateCheck();
+	checkForJSON(jsonPath)
+		.then(updateCheck(jsonPath))
+		.catch(handleErrors)
     console.log('this is the middleware');
 }
 
@@ -33,19 +36,21 @@ module.exports = function(){
 // 	});
 // }
 
-// function updateCheck () {
-//     fs.readFile('json/data.json', 'utf-8', function(err, data) {
-//         if (err) throw err
-//         var cData = JSON.parse(data)
-//         lastUpdate = cData.lastUpdated
-//         if ((Date.now() - lastUpdate) > 1000) {
-// 			cData.lastUpdated = [];
-// 			cData.pacspending = [];
-// 			cData.lastUpdated.push(Date.now());
-// 			callCOA(cData);
-//         }
-// 	});
-// };
+function handleErrors(error) {
+	console.log('Error: ', error)
+}
+
+function readFilePromise(filepath) {
+	console.log('readFilePromise')
+	return new Promise((resolve, reject) => {
+        fs.readFile(filepath, function(err, data) {
+			if (err)
+				reject (err);
+			else
+				resolve(data);
+		})
+	})
+}
 
 function writeFilePromise(writePath, textContent) {
 	console.log('writeFilePromise')
@@ -59,9 +64,22 @@ function writeFilePromise(writePath, textContent) {
 	})
 }
 
-async function checkForJSON() {
-	const fileExists = fs.existsSync('json/data.json')
+async function updateCheck (jsonPath) {
+	let current = await readFilePromise(jsonPath)
+	let cData = JSON.parse(current)
+	lastUpdate = cData.lastUpdated
+	if ((Date.now() - lastUpdate) > 1000) {
+		cData.lastUpdated = [];
+		cData.pacspending = [];
+		cData.lastUpdated.push(Date.now());
+		console.log('update check function', jsonPath, cData)
+		await writeFilePromise(jsonPath, JSON.stringify(cData))
+	}
+};
+
+async function checkForJSON(jsonPath) {
+	const fileExists = fs.existsSync(jsonPath)
 	if (!fileExists){
-		await writeFilePromise('json/data.json', '{"lastUpdated":[],"pacspending":[]}')
+		await writeFilePromise(jsonPath, '{"lastUpdated":[],"pacspending":[]}')
 	}
 };
