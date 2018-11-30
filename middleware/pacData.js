@@ -55,7 +55,6 @@ async function updateCheck (jsonPath) {
 		cData.lastUpdated.push(Date.now());
 		console.log('update check function', jsonPath, cData)
 		await writeFilePromise(jsonPath, JSON.stringify(cData))
-		console.log('hello', response.data)
 		// axios.get('https://data.austintexas.gov/resource/asyh-u6ja.json?$limit=5')
 		// .then(function (response) {
 		// 	cData.pacspending.push(response.data)
