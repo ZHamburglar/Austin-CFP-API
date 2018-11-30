@@ -17,27 +17,8 @@ module.exports = function(){
     console.log('this is the middleware');
 }
 
-// function writeUpdate (cData) {
-// 	fs.writeFile('json/data.json', JSON.stringify(cData), 'utf-8', function(err) {
-// 		if (err) throw err
-// 		console.log('JSON Sent!');
-// 	});
-// }
-
-// function callCOA (cData) {
-// 	axios.get('https://data.austintexas.gov/resource/asyh-u6ja.json?$limit=5')
-// 	.then(function (response) {
-// 		console.log(response.data);
-// 		cData.pacspending = response.data;
-// 		writeUpdate(cData);
-// 	})
-// 	.catch(function (error) {
-// 		console.log(error);
-// 	});
-// }
-
 function handleErrors(error) {
-	console.log('Error: ', error)
+	console.log('Error!: ', error)
 }
 
 function readFilePromise(filepath) {
@@ -74,6 +55,15 @@ async function updateCheck (jsonPath) {
 		cData.lastUpdated.push(Date.now());
 		console.log('update check function', jsonPath, cData)
 		await writeFilePromise(jsonPath, JSON.stringify(cData))
+		console.log('hello', response.data)
+		// axios.get('https://data.austintexas.gov/resource/asyh-u6ja.json?$limit=5')
+		// .then(function (response) {
+		// 	cData.pacspending.push(response.data)
+		// 	writeFilePromise(jsonPath, JSON.stringify(cData))
+		// })
+		// .catch(function (error) {
+		// 	console.log("error!", error);
+		// });
 	}
 };
 
