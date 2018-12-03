@@ -16,11 +16,6 @@ var pacData = require('../middleware/pacData');
 const jsonPath = 'json/data.json'
 
 router.get('/', function(req, res, next) {
-	checkForJSON(res)
-});
-
-
-function checkForJSON(res) {
 	const fileExists = fs.existsSync(jsonPath)
 	if (!fileExists){
 		// If file doesn't exist run this.
@@ -29,30 +24,7 @@ function checkForJSON(res) {
 		// If file exists run this.
 		foo(res);
 	}
-};
-
-const foo = async (res) => {
-	console.log('creating file. foo.')
-	let currentJson = await readFilePromise(jsonPath)
-	let cData = JSON.parse(currentJson)
-	let lastUpdate = cData.lastUpdated
-	if ((Date.now() - lastUpdate) > 10000) {
-		let result = await callAPI()
-		let cData = {"lastUpdated":[Date.now()],"pacspending":result}
-		await writeFilePromise(jsonPath, JSON.stringify(cData))
-		await sendJson(res)
-	} else {
-		await sendJson(res)
-	}
-}
-
-const bar = async (res) => {
-	console.log('file being created. bar.')
-	let result = await callAPI()
-	let cData = {"lastUpdated":[Date.now()],"pacspending":result}
-	await writeFilePromise(jsonPath, JSON.stringify(cData))
-	await sendJson(res)
-}
+});
 
 const sendJson = async (res) => {
 	var filePath = './json/data.json';
@@ -62,8 +34,9 @@ const sendJson = async (res) => {
 
 const callAPI = async () => {
 	return new Promise((resolve, reject) => {
-		axios.get('https://data.austintexas.gov/resource/asyh-u6ja.json?$limit=5')
+		axios.get('https://data.austintexas.gov/resource/sf6w-qpmi.json?$limit=5&$offset=25000')
 		.then(function (response) {
+			console.log('API call 1', response.data.length)
 			resolve(response.data)
 		})
 		.catch(function (error) {
@@ -73,7 +46,7 @@ const callAPI = async () => {
 	});
 }
 
-function readFilePromise(filepath) {
+const readFilePromise = async (filepath) => {
 	console.log('readFilePromise')
 	return new Promise((resolve, reject) => {
         fs.readFile(filepath, function(err, data) {
@@ -95,6 +68,30 @@ const writeFilePromise = async (writePath, textContent) => {
 				resolve();
 		})
 	})
+}
+
+const foo = async (res) => {
+	let currentJson = await readFilePromise(jsonPath)
+	let cData = JSON.parse(currentJson)
+	let lastUpdate = cData.lastUpdated
+	if ((Date.now() - lastUpdate) > 10000) {
+		console.log('File exists. Updating')
+		let result = await callAPI()
+		let cData = {"lastUpdated":[Date.now()],"pacspending":result}
+		await writeFilePromise(jsonPath, JSON.stringify(cData))
+		await sendJson(res)
+	} else {
+		console.log('File exists. Not updating')
+		await sendJson(res)
+	}
+}
+
+const bar = async (res) => {
+	console.log('file being created. bar.')
+	let result = await callAPI()
+	let cData = {"lastUpdated":[Date.now()],"pacspending":result}
+	await writeFilePromise(jsonPath, JSON.stringify(cData))
+	await sendJson(res)
 }
 
 module.exports = router;
