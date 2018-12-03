@@ -1,6 +1,7 @@
 var express = require('express');
 const fs = require('fs');
 const util = require('util');
+const moment = require ('moment');
 
 var router = express.Router();
 
@@ -14,49 +15,34 @@ router.get('/:name', function(req, res, next) {
 });
 
 const getName = (obj, key, val) => {
-	// console.log('get names', obj, key, val)
 	var objects = [];
     for (var i in obj) {
-		// // console.log('i', obj[i])
-		// if (!obj.hasOwnProperty(i)) continue;
-		// // This splits up the objects in the JSON into lower levels
-        // if (typeof obj[i] == 'object') {
-		// 	console.log('here 1')
-
-		// 	objects = objects.concat(getName(obj[i], key, val));    
-		//         //if key matches and value matches or if key matches and value is not passed (eliminating the case where key matches but passed value does not)
-        // } else if (i == key && obj[i] == val || i == key && val == '') {
-		// 	// console.log('here 2', i, key, obj[i], val)
-
-        //     objects.push(obj);
-        // } else if (obj[i] == val && key == ''){
-		// 	console.log('here 3')
-
-        //     //only add if the object is not already in the array
-        //     if (objects.lastIndexOf(obj) == -1){
-        //         objects.push(obj);
-        //     }
-		// }
-
 		if (!obj.hasOwnProperty(i)) continue;
 		// This splits up the objects in the JSON into lower levels
 		if (typeof obj[i] == 'object') {
-			console.log('here 1')
-
-			objects = objects.concat(getName(obj[i], key, val));    
-				//if key matches and value matches or if key matches and value is not passed (eliminating the case where key matches but passed value does not)
+			objects = objects.concat(getName(obj[i], key, val));   
+		// Once JSON is split, search through each key-value pair 
 		} else if (typeof obj[i] !== 'object') {
-			// console.log('wooooo lower', obj[i])
+			//if key matches and value matches or if key matches and value is not passed (eliminating the case where key matches but passed value does not)
+			var regex = new RegExp('' + val + '', 'i');
+			// at this point, the line above is the same as: var regex = /${val}/i;
 			if (i == key && val == '') {
 				objects.push(obj);
 			}
-			else if (i == key && obj[i].search(/rick/i) != -1) {
-				console.log('here 2', i, key, obj[i], val)
-				// console.log(obj[i].search(/100/i) != -1)
-				objects.push(obj);
-			} else if (obj[i] == val && key == ''){
-				console.log('here 3')
-	
+			else if (i == key && obj[i].search(regex) != -1) {
+				newObj = Object.assign({});
+				newObj.date_reported = moment(obj.date_reported).format('MM-DD-YYYY')
+				newObj.expenditure_type = obj.expenditure_type
+				newObj.expense_description = obj.expense_description
+				newObj.paid_by = obj.paid_by
+				newObj.payee = obj.payee
+				newObj.payee_address = obj.payee_address + ', ' + obj.city_state_zip
+				newObj.payee_type = obj.payee_type
+				newObj.payment_amount = obj.payment_amount
+				newObj.payment_date = moment(obj.payment_date).format('MM-DD-YYYY')
+				newObj.view_report = obj.view_report
+				objects.push(newObj);
+			} else if (obj[i] == val && key == ''){	
 				//only add if the object is not already in the array
 				if (objects.lastIndexOf(obj) == -1){
 					objects.push(obj);
@@ -82,10 +68,7 @@ const readFilePromise = async (filepath) => {
 const searchNames = async (res, name) => {
 	let results = await readFilePromise(jsonPath);
 	let result = JSON.parse(results)
-	// let names = getName(result.pacspending,'payment_amount','10')
-	let names = getName(result.pacspending,'payee','Rick')
-	// console.log("name", names)
-	// console.log(getName(result.pacspending,'payment_amount','100'))
+	let names = getName(result.pacspending, 'payee', name)
 	res.send(names);
 }
 

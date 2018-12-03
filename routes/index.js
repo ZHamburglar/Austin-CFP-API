@@ -34,24 +34,22 @@ const sendJson = async (res) => {
 
 const callAPI = async () => {
 	return new Promise((resolve, reject) => {
-		axios.get('https://data.austintexas.gov/resource/sf6w-qpmi.json?$limit=5&$offset=0')
-		.then(function (response) {
-			console.log('API call 1', response.data.length)
-			return axios.get('https://data.austintexas.gov/resource/sf6w-qpmi.json?$limit=5&$offset=5')
-		})
-		.then(function(response) {
-			console.log('response', response.data.length)
-			resolve(response.data)
-		})
+		let response = []
+		axios.all([
+			axios.get('https://data.austintexas.gov/resource/sf6w-qpmi.json?$limit=20&$offset=0'),
+			axios.get('https://data.austintexas.gov/resource/sf6w-qpmi.json?$limit=20&$offset=20')
+		])
+		.then(axios.spread((response1, response2) => {
+			let response = response1.data.concat(response2.data)
+			resolve(response);
+		}))
 		.catch(function (error) {
-			console.log("error!", error);
 			reject(error)
 		});
 	});
 }
 
 const readFilePromise = async (filepath) => {
-	console.log('readFilePromise')
 	return new Promise((resolve, reject) => {
         fs.readFile(filepath, function(err, data) {
 			if (err)
@@ -63,7 +61,6 @@ const readFilePromise = async (filepath) => {
 }
 
 const writeFilePromise = async (writePath, textContent) => {
-	console.log('writeFilePromise')
 	return new Promise((resolve, reject) => {
 		fs.writeFile(writePath, textContent, (err) => {
 			if (err)
@@ -79,19 +76,16 @@ const foo = async (res) => {
 	let cData = JSON.parse(currentJson)
 	let lastUpdate = cData.lastUpdated
 	if ((Date.now() - lastUpdate) > 10000) {
-		console.log('File exists. Updating')
 		let result = await callAPI()
 		let cData = {"lastUpdated":[Date.now()],"pacspending":result}
 		await writeFilePromise(jsonPath, JSON.stringify(cData))
 		await sendJson(res)
 	} else {
-		console.log('File exists. Not updating')
 		await sendJson(res)
 	}
 }
 
 const bar = async (res) => {
-	console.log('file being created. bar.')
 	let result = await callAPI(5)
 	let cData = {"lastUpdated":[Date.now()],"pacspending":result}
 	await writeFilePromise(jsonPath, JSON.stringify(cData))
