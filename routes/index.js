@@ -34,9 +34,13 @@ const sendJson = async (res) => {
 
 const callAPI = async () => {
 	return new Promise((resolve, reject) => {
-		axios.get('https://data.austintexas.gov/resource/sf6w-qpmi.json?$limit=5&$offset=25000')
+		axios.get('https://data.austintexas.gov/resource/sf6w-qpmi.json?$limit=5&$offset=0')
 		.then(function (response) {
 			console.log('API call 1', response.data.length)
+			return axios.get('https://data.austintexas.gov/resource/sf6w-qpmi.json?$limit=5&$offset=5')
+		})
+		.then(function(response) {
+			console.log('response', response.data.length)
 			resolve(response.data)
 		})
 		.catch(function (error) {
@@ -88,7 +92,7 @@ const foo = async (res) => {
 
 const bar = async (res) => {
 	console.log('file being created. bar.')
-	let result = await callAPI()
+	let result = await callAPI(5)
 	let cData = {"lastUpdated":[Date.now()],"pacspending":result}
 	await writeFilePromise(jsonPath, JSON.stringify(cData))
 	await sendJson(res)
