@@ -32,17 +32,13 @@ const sendJson = async (res) => {
 	res.sendFile(resolvedPath);
 }
 
-const callAPI = async () => {
+const callAPI = async (x) => {
 	return new Promise((resolve, reject) => {
 		let response = []
-		axios.all([
-			axios.get('https://data.austintexas.gov/resource/sf6w-qpmi.json?$limit=20&$offset=0'),
-			axios.get('https://data.austintexas.gov/resource/sf6w-qpmi.json?$limit=20&$offset=20')
-		])
-		.then(axios.spread((response1, response2) => {
-			let response = response1.data.concat(response2.data)
-			resolve(response);
-		}))
+		axios.get('https://data.austintexas.gov/resource/sf6w-qpmi.json?$limit=100&$offset=' + x)
+		.then( function (response) {
+			resolve(response.data);
+		})
 		.catch(function (error) {
 			reject(error)
 		});
@@ -71,12 +67,20 @@ const writeFilePromise = async (writePath, textContent) => {
 	})
 }
 
+//364
 const foo = async (res) => {
 	let currentJson = await readFilePromise(jsonPath)
 	let cData = JSON.parse(currentJson)
 	let lastUpdate = cData.lastUpdated
 	if ((Date.now() - lastUpdate) > 10000) {
-		let result = await callAPI()
+		let result = []
+		let offset = 0
+		console.log('result.length', result.length, (await callAPI(offset)).length)
+		while ((await callAPI(offset)).length > 99 && offset < 1001){
+			result = result.concat(await callAPI(offset))
+			offset += 100;
+		}
+		// if the result.length is less than the increment then move on to the writeFilePromise
 		let cData = {"lastUpdated":[Date.now()],"pacspending":result}
 		await writeFilePromise(jsonPath, JSON.stringify(cData))
 		await sendJson(res)
@@ -86,7 +90,7 @@ const foo = async (res) => {
 }
 
 const bar = async (res) => {
-	let result = await callAPI(5)
+	let result = await callAPI(0)
 	let cData = {"lastUpdated":[Date.now()],"pacspending":result}
 	await writeFilePromise(jsonPath, JSON.stringify(cData))
 	await sendJson(res)
